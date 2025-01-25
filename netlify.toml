@@ -1,6 +1,6 @@
 [build]
   command = "npm install"
-  publish = "public"
+  publish = "/"
   functions = "functions"
 
 [build.environment]
@@ -8,7 +8,7 @@
 
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/server"
+  to = "/index.html"
   status = 200
 
 [functions]
