@@ -1,0 +1,2 @@
+# Run Substack sync at midnight on the 1st of every month
+0 0 1 * * /Users/seanfilipow/Coding/Static-Site/scripts/cron-sync.sh >> /Users/seanfilipow/Coding/Static-Site/logs/cron.log 2>&1 

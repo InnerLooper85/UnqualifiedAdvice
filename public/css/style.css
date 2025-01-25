@@ -1,0 +1,131 @@
+/* Base styles for all pages */
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    line-height: 1.5;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1, h2, h3 {
+    color: #333;
+}
+
+a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Navigation */
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 40px 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 20px;
+}
+
+/* Podcast episode styles */
+.episode-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.episode-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.episode-card__header {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.episode-card__artwork {
+    flex: 0 0 80px;
+    width: 80px;
+    height: 80px;
+    overflow: hidden;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.episode-card__artwork img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.episode-card__main {
+    flex: 1;
+    min-width: 0;
+}
+
+.episode-card__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 12px;
+    color: #333;
+}
+
+.episode-card__meta {
+    display: flex;
+    gap: 16px;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.episode-card__description {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #444;
+    margin-bottom: 16px;
+    white-space: pre-wrap;
+}
+
+.episode-card__embed {
+    margin-top: 24px;
+}
+
+.episode-card__links {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.episode-card__links a {
+    color: #0066cc;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.episode-card__links a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+    .episode-card__header {
+        gap: 16px;
+    }
+    
+    .episode-card__artwork {
+        flex: 0 0 70px;
+        width: 70px;
+        height: 70px;
+    }
+} 
