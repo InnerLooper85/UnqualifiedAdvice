@@ -9,10 +9,16 @@ const marked = require('marked');
 const https = require('https');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Serve static files
 app.use(express.static('public'));
+
+// Debug middleware
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    next();
+});
 
 // Helper function to read and parse markdown files
 async function readMarkdownFile(filePath) {
@@ -242,10 +248,25 @@ function processDescription(description) {
     return sanitized;
 }
 
-// Podcast index page
+// Podcast route with error handling
 app.get('/podcast', async (req, res) => {
     try {
-        const episodes = await loadEpisodes();
+        console.log('Loading podcast episodes...');
+        const episodesPath = path.join(__dirname, 'content', 'podcast', 'episodes.json');
+        
+        // Check if file exists
+        try {
+            await fs.access(episodesPath);
+        } catch (error) {
+            console.error(`Episodes file not found at: ${episodesPath}`);
+            throw new Error('Episodes file not found');
+        }
+
+        const data = await fs.readFile(episodesPath, 'utf-8');
+        const { episodes } = JSON.parse(data);
+        
+        console.log(`Loaded ${episodes.length} episodes`);
+
         const html = `
             <!DOCTYPE html>
             <html>
@@ -301,14 +322,22 @@ app.get('/podcast', async (req, res) => {
                 </body>
             </html>
         `;
+        
         res.send(html);
     } catch (error) {
-        console.error('Error loading episodes:', error);
-        res.status(500).send('Error loading episodes');
+        console.error('Error in /podcast route:', error);
+        res.status(500).send(`Error loading episodes: ${error.message}`);
     }
+});
+
+// Catch-all route for undefined paths
+app.use((req, res) => {
+    console.log(`404 - Not Found: ${req.path}`);
+    res.status(404).send('Page not found');
 });
 
 // Start server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
+    console.log(`Current directory: ${__dirname}`);
 }); 
