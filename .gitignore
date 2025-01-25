@@ -17,3 +17,6 @@ Thumbs.db
 .vscode/
 
 dist/
+
+# Local Netlify folder
+.netlify
