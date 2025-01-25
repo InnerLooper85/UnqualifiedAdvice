@@ -150,7 +150,7 @@ async function loadEpisodes() {
                 item: [
                     ['itunes:summary', 'itunesSummary'],
                     ['itunes:duration', 'duration'],
-                    ['itunes:image', 'image'],
+                    ['itunes:image', 'itunesImage'],
                     ['itunes:episode', 'episodeNumber']
                 ]
             },
@@ -171,6 +171,10 @@ async function loadEpisodes() {
                 feed = await customParser.parseURL(url);
                 if (feed) {
                     console.log('Successfully fetched from:', url);
+                    // Log the first episode to see its structure
+                    if (feed.items.length > 0) {
+                        console.log('First episode structure:', JSON.stringify(feed.items[0], null, 2));
+                    }
                     break;
                 }
             } catch (e) {
@@ -191,7 +195,7 @@ async function loadEpisodes() {
             date: item.pubDate,
             number: item.episodeNumber || '',
             duration: item.duration || '',
-            artworkUrl: item.image?.href || feed.image?.url || '',
+            artworkUrl: item.itunesImage?.$?.href || item.itunes?.image || feed.image?.url || '',
             audioUrl: item.enclosure?.url || ''
         }));
 
@@ -246,7 +250,7 @@ app.get('/podcast', async (req, res) => {
             <!DOCTYPE html>
             <html>
                 <head>
-                    <title>Podcast Episodes</title>
+                    <title>Unqualified Advice</title>
                     <link rel="stylesheet" href="/css/style.css">
                 </head>
                 <body>
@@ -260,7 +264,10 @@ app.get('/podcast', async (req, res) => {
                         </ul>
                     </nav>
                     <main>
-                        <h1>Podcast Episodes</h1>
+                        <h1>Unqualified Advice</h1>
+                        <div class="show-description">
+                            <p>Hello and welcome to Unqualified Advice, an entertaining show for entertainment purposes. Join us as we talk about running our small businesses, what we've been learning, and how we're applying lessons from academia and real life as entrepreneurs and investors.</p>
+                        </div>
                         ${episodes.map(episode => `
                             <div class="episode-card">
                                 <div class="episode-card__content">
