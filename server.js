@@ -1,8 +1,12 @@
 const express = require('express');
-const fs = require('fs').promises;
 const path = require('path');
-const marked = require('marked');
+const fs = require('fs').promises;
 const matter = require('gray-matter');
+const sanitizeHtml = require('sanitize-html');
+const Parser = require('rss-parser');
+const parser = new Parser();
+const marked = require('marked');
+const https = require('https');
 
 const app = express();
 const port = 3000;
@@ -136,52 +140,161 @@ app.get('/blog', async (req, res) => {
 // Function to load podcast episodes
 async function loadEpisodes() {
     try {
-        const episodesPath = path.join(__dirname, 'content', 'podcast', 'episodes.json');
-        const data = await fs.readFile(episodesPath, 'utf8');
-        const { episodes } = JSON.parse(data);
-        return episodes;
+        // Configure parser to ignore SSL errors
+        const agent = new https.Agent({
+            rejectUnauthorized: false
+        });
+
+        const customParser = new Parser({
+            customFields: {
+                item: [
+                    ['itunes:summary', 'itunesSummary'],
+                    ['itunes:duration', 'duration'],
+                    ['itunes:image', 'image'],
+                    ['itunes:episode', 'episodeNumber']
+                ]
+            },
+            requestOptions: {
+                agent: agent
+            }
+        });
+
+        // Try different possible RSS feed URLs
+        const feedUrls = [
+            'https://feeds.libsyn.com/513538/rss'
+        ];
+
+        let feed;
+        for (const url of feedUrls) {
+            try {
+                console.log('Attempting to fetch from:', url);
+                feed = await customParser.parseURL(url);
+                if (feed) {
+                    console.log('Successfully fetched from:', url);
+                    break;
+                }
+            } catch (e) {
+                console.log(`Failed to fetch from ${url}:`, e.message);
+            }
+        }
+
+        if (!feed) {
+            throw new Error('Could not fetch RSS feed from any URL');
+        }
+
+        console.log('Successfully fetched RSS feed');
+        
+        // Map feed items to episodes
+        const episodes = feed.items.map(item => ({
+            title: item.title,
+            description: item.itunesSummary || item.content || item.description,
+            date: item.pubDate,
+            number: item.episodeNumber || '',
+            duration: item.duration || '',
+            artworkUrl: item.image?.href || feed.image?.url || '',
+            audioUrl: item.enclosure?.url || ''
+        }));
+
+        return episodes.sort((a, b) => new Date(b.date) - new Date(a.date));
     } catch (error) {
-        console.error('Error reading episodes file:', error);
+        console.error('Error loading episodes:', error);
         return [];
     }
+}
+
+// Process episode descriptions
+function processDescription(description) {
+    if (!description) return '';
+
+    // The description already contains HTML, so we just need to sanitize it
+    const sanitized = sanitizeHtml(description, {
+        allowedTags: [
+            'p', 'br', 'b', 'i', 'em', 'strong', 'a', 'ul', 'li', 'ol',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'span'
+        ],
+        allowedAttributes: {
+            'a': ['href', 'target', 'rel', 'class'],
+            'div': ['class'],
+            'span': ['class'],
+            'ul': ['class'],
+            'li': ['class'],
+            'p': ['class', 'style'],
+            '*': ['style']
+        },
+        allowedStyles: {
+            '*': {
+                'text-decoration': [/^underline$/],
+                'margin': [/^.*$/],
+                'text-align': [/^.*$/]
+            }
+        },
+        // Don't escape entities
+        parseStyleAttributes: true,
+        textFilter: function(text) {
+            return text;
+        }
+    });
+
+    return sanitized;
 }
 
 // Podcast index page
 app.get('/podcast', async (req, res) => {
     try {
         const episodes = await loadEpisodes();
-        const episodesHtml = episodes.map(episode => `
-            <div class="episode-card">
-                <div class="episode-card__content">
-                    <div class="episode-card__header">
-                        <div class="episode-card__artwork">
-                            <img src="${episode.artworkUrl}" alt="${episode.title} artwork" loading="lazy">
-                        </div>
-                        <div class="episode-card__main">
-                            <h2 class="episode-card__title">${episode.title}</h2>
-                            <div class="episode-card__meta">
-                                <span class="episode-card__date">${episode.date}</span>
-                                <span class="episode-card__number">Episode ${episode.number}</span>
-                                <span class="episode-card__duration">${episode.duration}</span>
+        const html = `
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title>Podcast Episodes</title>
+                    <link rel="stylesheet" href="/css/style.css">
+                </head>
+                <body>
+                    <nav>
+                        <ul>
+                            <li><a href="/">Home</a></li>
+                            <li><a href="/blog">Blog</a></li>
+                            <li><a href="/podcast">Podcast</a></li>
+                            <li><a href="/about">About</a></li>
+                            <li><a href="/contact">Contact</a></li>
+                        </ul>
+                    </nav>
+                    <main>
+                        <h1>Podcast Episodes</h1>
+                        ${episodes.map(episode => `
+                            <div class="episode-card">
+                                <div class="episode-card__content">
+                                    <div class="episode-card__header">
+                                        <div class="episode-card__artwork">
+                                            <img src="${episode.artworkUrl}" alt="${episode.title} artwork">
+                                        </div>
+                                        <div class="episode-card__main">
+                                            <h2 class="episode-card__title">${episode.title}</h2>
+                                            <div class="episode-card__meta">
+                                                Episode ${episode.number} • ${new Date(episode.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} • ${episode.duration}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="episode-card__description">
+                                        ${processDescription(episode.description)}
+                                    </div>
+                                    <div class="episode-card__embed">
+                                        <audio controls preload="none" style="width: 100%;">
+                                            <source src="${episode.audioUrl}" type="audio/mpeg">
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                    </div>
+                                    <div class="episode-card__links">
+                                        <a href="${episode.listenUrl}" target="_blank" rel="noopener">Listen on Libsyn</a>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="episode-card__description">${episode.description}</div>
-                            <div class="episode-card__links">
-                                <a href="${episode.listenUrl}" target="_blank" rel="noopener">Listen on Libsyn</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="episode-card__embed">
-                        <audio controls preload="none" style="width: 100%;">
-                            <source src="${episode.audioUrl}" type="audio/mpeg">
-                            Your browser does not support the audio element.
-                        </audio>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-
-        const html = await fs.readFile('templates/podcast.html', 'utf8');
-        res.send(html.replace('{{episodes}}', episodesHtml));
+                        `).join('\n')}
+                    </main>
+                </body>
+            </html>
+        `;
+        res.send(html);
     } catch (error) {
         console.error('Error loading episodes:', error);
         res.status(500).send('Error loading episodes');
