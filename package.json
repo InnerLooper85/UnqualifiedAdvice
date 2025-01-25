@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "build": "npm install",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "sync-substack": "node scripts/sync-substack.js",
+    "sync-podcast": "node scripts/sync-podcast.js"
   },
   "keywords": [],
   "author": "",

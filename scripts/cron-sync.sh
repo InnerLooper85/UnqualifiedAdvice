@@ -7,5 +7,6 @@ PROJECT_DIR="$( dirname "$SCRIPT_DIR" )"
 # Go to project directory
 cd "$PROJECT_DIR"
 
-# Run the sync script in automated mode
-/usr/local/bin/node scripts/sync-substack.js --automated 
+# Run both sync scripts in automated mode
+/usr/local/bin/node scripts/sync-substack.js --automated
+/usr/local/bin/node scripts/sync-podcast.js --automated 
