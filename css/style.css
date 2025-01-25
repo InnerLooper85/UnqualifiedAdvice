@@ -75,4 +75,57 @@ footer {
     padding: 20px;
     border: 1px solid #eee;
     border-radius: 4px;
+}
+
+.show-description {
+    max-width: 800px;
+    margin: 20px auto;
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+.episode-card {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.episode-meta {
+    color: #666;
+    margin: 10px 0 20px;
+}
+
+.episode-content {
+    line-height: 1.6;
+    margin: 20px 0;
+}
+
+.chapters {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.chapters ul {
+    list-style: none;
+    padding: 0;
+}
+
+.chapters li {
+    margin: 10px 0;
+    padding: 5px 0;
+    color: #333;
+}
+
+h1 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 1.8em;
+    margin: 20px 0;
 } 
